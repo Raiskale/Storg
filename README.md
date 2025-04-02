@@ -2,7 +2,7 @@
 
 Salasanakone tehty C#, jolla voit pitää salasanasi turvallisesti muistissa.
 
-##🔽 Lataa ja asenna
+## 🔽 Lataa ja asenna
 
 Voit ladata ohjelman asennuspaketin suoraan [Releases-sivulta](https://github.com/KAYTTAJANIMI/Salasanakone/releases) ja asentaa sen seuraavasti:
 
