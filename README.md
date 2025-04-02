@@ -8,7 +8,7 @@ Voit ladata ohjelman asennuspaketin suoraan [Releases-sivulta](https://github.co
 
 1. Siirry [Releases-sivulle](https://github.com/KAYTTAJANIMI/Salasanakone/releases).
 2. Lataa uusin **Exe-tiedosto**.
-3.. Avaa ohjelma suorittamalla `Salasanakone.exe`.
+3. Avaa ohjelma suorittamalla `Salasanakone.exe`.
 
 
 ## 🔧 Ominaisuudet
