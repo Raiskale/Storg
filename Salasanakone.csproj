@@ -105,6 +105,7 @@
     <Content Include="home.png" />
     <Content Include="logo.png" />
     <Content Include="plus.png" />
+    <Content Include="setting.png" />
     <Content Include="st.png" />
     <Content Include="star.png" />
   </ItemGroup>
