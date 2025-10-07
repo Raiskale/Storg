@@ -31,10 +31,10 @@ namespace Salasanakone
             if (!File.Exists(masterKeyFile))
             {
                 // Luodaan uusi master password
-                string masterPassword = Prompt.ShowDialog("Aseta master password:", "Master Password");
+                string masterPassword = Prompt.ShowDialog("Set a master password:", "Master Password");
                 if (string.IsNullOrEmpty(masterPassword))
                 {
-                    MessageBox.Show("Master password vaaditaan!");
+                    MessageBox.Show("You need a master key!");
                     Application.Exit();
                     return;
                 }
@@ -49,7 +49,7 @@ namespace Salasanakone
             else
             {
                 // Kysy master password
-                string currentMasterPassword = Prompt.ShowDialog("Syötä master password:", "Master Password");
+                string currentMasterPassword = Prompt.ShowDialog("Inset Master key:", "Master Password");
                 using (SHA256 sha = SHA256.Create())
                 {
                     byte[] hashBytes = sha.ComputeHash(Encoding.UTF8.GetBytes(currentMasterPassword));
@@ -57,7 +57,7 @@ namespace Salasanakone
                     string storedHash = File.ReadAllText(masterKeyFile);
                     if (hash != storedHash)
                     {
-                        MessageBox.Show("Väärä master password!");
+                        MessageBox.Show("Incorrect Master Key!");
                         Application.Exit();
                         return;
                     }
@@ -220,11 +220,7 @@ namespace Salasanakone
             }
         }
 
-        private void pictureBox3_Click(object sender, EventArgs e)
-        {
-            string path = Application.StartupPath + @"\SVG\1.svg";
-            LoadSvgToPictureBox(path, pictureBox3);
-        }
+
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
@@ -233,20 +229,20 @@ namespace Salasanakone
                 Width = 300,
                 Height = 260,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                Text = "Lisää salasana",
+                Text = "Add a password.",
                 StartPosition = FormStartPosition.CenterParent
             };
 
-            Label lblSite = new Label() { Left = 10, Top = 20, Text = "Sivusto/App:" };
+            Label lblSite = new Label() { Left = 10, Top = 20, Text = "Site/App:" };
             TextBox txtSite = new TextBox() { Left = 10, Top = 40, Width = 260 };
 
             Label lblUsername = new Label() { Left = 10, Top = 70, Text = "Username/Gmail:" };
             TextBox txtUsername = new TextBox() { Left = 10, Top = 90, Width = 260 };
 
-            Label lblPassword = new Label() { Left = 10, Top = 120, Text = "Salasana:" };
+            Label lblPassword = new Label() { Left = 10, Top = 120, Text = "Password:" };
             TextBox txtPassword = new TextBox() { Left = 10, Top = 140, Width = 260 };
 
-            Label lblCategory = new Label() { Left = 10, Top = 170, Text = "Kategoria:" };
+            Label lblCategory = new Label() { Left = 10, Top = 170, Text = "Category:" };
             TextBox txtCategory = new TextBox() { Left = 10, Top = 190, Width = 260 };
 
             Button btnOK = new Button() { Text = "OK", Left = 50, Width = 80, Top = 220, DialogResult = DialogResult.OK };
@@ -275,7 +271,7 @@ namespace Salasanakone
                         Site = txtSite.Text,
                         Username = txtUsername.Text,
                         Password = txtPassword.Text,
-                        Category = string.IsNullOrEmpty(txtCategory.Text) ? "Muu" : txtCategory.Text
+                        Category = string.IsNullOrEmpty(txtCategory.Text) ? "Else" : txtCategory.Text
                     };
 
                     passwords.Add(newItem);
@@ -283,7 +279,7 @@ namespace Salasanakone
 
                     listBox1.Items.Add($"{newItem.Site} - {newItem.Username}");
 
-                    MessageBox.Show("Salasana tallennettu!");
+                    MessageBox.Show("Password saved!");
                 }
             }
         }
@@ -312,16 +308,16 @@ namespace Salasanakone
                 if (!string.IsNullOrEmpty(pw))
                 {
                     Clipboard.SetText(pw);
-                    MessageBox.Show("Salasana kopioitu leikepöydälle!");
+                    MessageBox.Show("Password copied to clipboard!");
                 }
                 else
                 {
-                    MessageBox.Show("Valitulla kohteella ei ole salasanaa.");
+                    MessageBox.Show("It doesnt have a password yet.");
                 }
             }
             else
             {
-                MessageBox.Show("Valitse ensin salasana listasta.");
+                MessageBox.Show("Select a password first!.");
             }
         }
 
@@ -330,7 +326,7 @@ namespace Salasanakone
             int index = listBox1.SelectedIndex;
             if (index < 0 || index >= passwords.Count)
             {
-                MessageBox.Show("Valitse ensin salasana listasta!");
+                MessageBox.Show("Choose a password first!");
                 return;
             }
 
@@ -341,19 +337,19 @@ namespace Salasanakone
                 Width = 250,
                 Height = 180,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                Text = "Asetukset",
+                Text = "Settings",
                 StartPosition = FormStartPosition.CenterParent
             };
 
-            Button btnEdit = new Button() { Text = "Muokkaa", Left = 50, Width = 120, Top = 20, DialogResult = DialogResult.OK };
-            Button btnDelete = new Button() { Text = "Poista", Left = 50, Width = 120, Top = 60 };
-            Button btnCancel = new Button() { Text = "Peruuta", Left = 50, Width = 120, Top = 100, DialogResult = DialogResult.Cancel };
+            Button btnEdit = new Button() { Text = "Edit", Left = 50, Width = 120, Top = 20, DialogResult = DialogResult.OK };
+            Button btnDelete = new Button() { Text = "Delete", Left = 50, Width = 120, Top = 60 };
+            Button btnCancel = new Button() { Text = "Cancel", Left = 50, Width = 120, Top = 100, DialogResult = DialogResult.Cancel };
 
             settingsForm.Controls.AddRange(new Control[] { btnEdit, btnDelete, btnCancel });
 
             btnDelete.Click += (s, ev) =>
             {
-                var result = MessageBox.Show("Haluatko varmasti poistaa tämän salasanan?", "Vahvista poisto", MessageBoxButtons.YesNo);
+                var result = MessageBox.Show("You sure you want to delete this password?", "Im Sure.", MessageBoxButtons.YesNo);
                 if (result == DialogResult.Yes)
                 {
                     passwords.RemoveAt(index);
@@ -370,24 +366,24 @@ namespace Salasanakone
                     Width = 300,
                     Height = 260,
                     FormBorderStyle = FormBorderStyle.FixedDialog,
-                    Text = "Muokkaa salasanaa",
+                    Text = "Edit Password",
                     StartPosition = FormStartPosition.CenterParent
                 };
 
-                Label lblSite = new Label() { Left = 10, Top = 20, Text = "Sivusto/App:" };
+                Label lblSite = new Label() { Left = 10, Top = 20, Text = "Site/App:" };
                 TextBox txtSite = new TextBox() { Left = 10, Top = 40, Width = 260, Text = selected.Site };
 
                 Label lblUsername = new Label() { Left = 10, Top = 70, Text = "Username/Gmail:" };
                 TextBox txtUsername = new TextBox() { Left = 10, Top = 90, Width = 260, Text = selected.Username };
 
-                Label lblPassword = new Label() { Left = 10, Top = 120, Text = "Salasana:" };
+                Label lblPassword = new Label() { Left = 10, Top = 120, Text = "Password:" };
                 TextBox txtPassword = new TextBox() { Left = 10, Top = 140, Width = 260, Text = selected.Password };
 
-                Label lblCategory = new Label() { Left = 10, Top = 170, Text = "Kategoria:" };
+                Label lblCategory = new Label() { Left = 10, Top = 170, Text = "Category:" };
                 TextBox txtCategory = new TextBox() { Left = 10, Top = 190, Width = 260, Text = selected.Category };
 
-                Button btnOK = new Button() { Text = "Tallenna", Left = 50, Width = 80, Top = 220, DialogResult = DialogResult.OK };
-                Button btnCancelEdit = new Button() { Text = "Peruuta", Left = 150, Width = 80, Top = 220, DialogResult = DialogResult.Cancel };
+                Button btnOK = new Button() { Text = "Save", Left = 50, Width = 80, Top = 220, DialogResult = DialogResult.OK };
+                Button btnCancelEdit = new Button() { Text = "Cancel", Left = 150, Width = 80, Top = 220, DialogResult = DialogResult.Cancel };
 
                 editForm.Controls.AddRange(new Control[] { lblSite, txtSite, txtUsername, txtPassword, lblPassword, lblCategory, txtCategory, btnOK, btnCancelEdit });
 
@@ -409,9 +405,14 @@ namespace Salasanakone
 
             settingsForm.ShowDialog();
         }
+
+        private void label8_Click_1(object sender, EventArgs e)
+        {
+
+        }
     }
 
-  
+
     public static class Prompt
     {
         public static string ShowDialog(string text, string caption)
