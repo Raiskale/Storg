@@ -2,7 +2,7 @@
 
 Salasanakone on C#:lla tehty sovellus, johon voi tallentaa salasanoja AES-salattuna.
 Käyttäjä voi määrittää pääsalasanan (master password), jolla salatut salasanat voidaan myöhemmin avata.
-[Showcase.PNG](https://github.com/Raiskale/Storg/blob/master/Showcase.png)
+![Showcase kuva](https://raw.githubusercontent.com/Raiskale/Storg/master/Showcase.png)
 
 # 🧭 Toiminta ja käyttötarkoitus
 
