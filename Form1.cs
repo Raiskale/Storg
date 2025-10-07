@@ -16,21 +16,24 @@ namespace Salasanakone
 {
     public partial class Storg : Form
     {
+        // Aes enryptio from master key
         private static byte[] aesKey;
 
         public Storg()
         {
             InitializeComponent();
-            InitializeMasterPassword();
+            InitializeMasterPassword(); // Asks for master key when starting app
         }
 
+
+        // Master key asking and verifying it
         private void InitializeMasterPassword()
         {
             string masterKeyFile = Path.Combine(Application.StartupPath, "masterkey.txt");
 
             if (!File.Exists(masterKeyFile))
             {
-                // Luodaan uusi master password
+                // Create master key when first running
                 string masterPassword = Prompt.ShowDialog("Set a master password:", "Master Password");
                 if (string.IsNullOrEmpty(masterPassword))
                 {
@@ -48,13 +51,14 @@ namespace Salasanakone
             }
             else
             {
-                // Kysy master password
+                // Asks for master key
                 string currentMasterPassword = Prompt.ShowDialog("Inset Master key:", "Master Password");
                 using (SHA256 sha = SHA256.Create())
                 {
                     byte[] hashBytes = sha.ComputeHash(Encoding.UTF8.GetBytes(currentMasterPassword));
                     string hash = Convert.ToBase64String(hashBytes);
                     string storedHash = File.ReadAllText(masterKeyFile);
+                    // comparing hashes to verify key
                     if (hash != storedHash)
                     {
                         MessageBox.Show("Incorrect Master Key!");
@@ -80,7 +84,7 @@ namespace Salasanakone
             public string Password { get; set; }
             public string Category { get; set; }
         }
-
+        // password storage
         private List<PasswordInfo> passwords = new List<PasswordInfo>();
         private string passwordFile = Path.Combine(Application.StartupPath, "passwords.json");
 
@@ -120,7 +124,7 @@ namespace Salasanakone
             string json = JsonSerializer.Serialize(encryptedPasswords, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(passwordFile, json);
         }
-
+        // encryption
         private string EncryptString(string plainText, byte[] key)
         {
             using (Aes aes = Aes.Create())
@@ -140,7 +144,7 @@ namespace Salasanakone
                 }
             }
         }
-
+        // more of encryption 
         private string DecryptString(string cipherText, byte[] key)
         {
             byte[] fullCipher = Convert.FromBase64String(cipherText);
@@ -161,11 +165,11 @@ namespace Salasanakone
                 }
             }
         }
-
+        // app starting process 
         private void Storg_Load(object sender, EventArgs e)
         {
             LoadPasswords();
-
+            // showing first password in the list on right
             if (passwords.Count > 0)
             {
                 listBox1.SelectedIndex = 0;
@@ -176,6 +180,8 @@ namespace Salasanakone
                 label10.Text = first.Category;
                 passwordVisible = false;
             }
+
+            // if not any password on json showing labels empty
             else
             {
                 label4.Text = "-";
@@ -184,7 +190,7 @@ namespace Salasanakone
                 label10.Text = "-";
             }
         }
-
+        // empty events 
         private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e) { }
         private void pictureBox5_Click(object sender, EventArgs e) { }
         private void pictureBox3_Click_1(object sender, EventArgs e) { }
@@ -199,7 +205,9 @@ namespace Salasanakone
         private void label8_Click(object sender, EventArgs e) { }
         private void label10_Click(object sender, EventArgs e) { }
 
+        // toggle password visibility onright 
         private bool passwordVisible = false;
+
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -207,6 +215,7 @@ namespace Salasanakone
             if (index >= 0 && index < passwords.Count)
             {
                 var selected = passwords[index];
+                // toggle between visibilty
                 if (passwordVisible)
                 {
                     label8.Text = new string('*', selected.Password.Length);
@@ -221,7 +230,7 @@ namespace Salasanakone
         }
 
 
-
+        // adding password 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
             Form inputForm = new Form()
@@ -247,7 +256,7 @@ namespace Salasanakone
 
             Button btnOK = new Button() { Text = "OK", Left = 50, Width = 80, Top = 220, DialogResult = DialogResult.OK };
             Button btnCancel = new Button() { Text = "Cancel", Left = 150, Width = 80, Top = 220, DialogResult = DialogResult.Cancel };
-
+            // form for adding passwords
             inputForm.Controls.Add(lblSite);
             inputForm.Controls.Add(txtSite);
             inputForm.Controls.Add(lblUsername);
@@ -284,6 +293,7 @@ namespace Salasanakone
             }
         }
 
+        // displaying infos on right of the selected password 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             int index = listBox1.SelectedIndex;
@@ -297,7 +307,7 @@ namespace Salasanakone
                 passwordVisible = false;
             }
         }
-
+        // copying to clipboard 
         private void button2_Click(object sender, EventArgs e)
         {
             int index = listBox1.SelectedIndex;
@@ -320,7 +330,7 @@ namespace Salasanakone
                 MessageBox.Show("Select a password first!.");
             }
         }
-
+        // settings ( editing and delete ) 
         private void pictureBox7_Click(object sender, EventArgs e)
         {
             int index = listBox1.SelectedIndex;
@@ -390,6 +400,8 @@ namespace Salasanakone
                 editForm.AcceptButton = btnOK;
                 editForm.CancelButton = btnCancelEdit;
 
+
+                // saving updated infos 
                 if (editForm.ShowDialog() == DialogResult.OK)
                 {
                     selected.Site = txtSite.Text;
@@ -412,7 +424,7 @@ namespace Salasanakone
         }
     }
 
-
+    // input prompti
     public static class Prompt
     {
         public static string ShowDialog(string text, string caption)
