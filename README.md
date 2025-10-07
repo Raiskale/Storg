@@ -59,7 +59,10 @@ Siirry [Releases-sivulle](https://github.com/Raiskale/Storg/releases).
 3. Suorita asennus suorittamalla `Salasanakone.exe`.
 
 
-🧑‍💻 Kehittäjä
+
+
+
+## 🧑‍💻 Kehittäjä
 
 Niilo Räisänen
 🌐 [https://niilo.cc](https://niilo.cc/)
