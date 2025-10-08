@@ -15,14 +15,7 @@ Kaikki salasanat salataan AES-salauksella, ja niiden purkaminen onnistuu vain oi
 3. Kun sovellus käynnistetään uudelleen, master passwordia kysytään tietojen purkamista varten.
 
 
-```mermaid
-flowchart TD
-    A[Start] --> B[Enter master password]
-    B --> C{Is password correct?}
-    C -->|Yes| D[Decrypt passwords]
-    C -->|No| E[Show error]
-    D --> F[Display password list]
-    E --> B
+
 
 
 
