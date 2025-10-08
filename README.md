@@ -2,6 +2,7 @@
 
 Salasanakone on C#:lla tehty sovellus, johon voi tallentaa salasanoja AES-salattuna.
 Käyttäjä voi määrittää pääsalasanan (master password), jolla salatut salasanat voidaan myöhemmin avata.
+![Showcase kuva](https://raw.githubusercontent.com/Raiskale/Storg/master/Showcase.png)
 
 # 🧭 Toiminta ja käyttötarkoitus
 
@@ -56,7 +57,7 @@ byte[] key = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(masterPassword))
 Siirry [Releases-sivulle](https://github.com/Raiskale/Storg/releases).
 1. Siirry [Releases-sivulle](https://github.com/Raiskale/Storg/releases).
 2. Lataa uusin installer.
-3. Suorita asennus suorittamalla `Salasanakone.exe`.
+3. Suorita asennus suorittamalla `Storg.exe`.
 
 
 
