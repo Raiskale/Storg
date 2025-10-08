@@ -16,59 +16,78 @@ namespace Salasanakone
 {
     public partial class Storg : Form
     {
-        // Aes enryptio from master key
-        private static byte[] aesKey;
+        // Enryptio
+        public static byte[] aesKey;
 
         public Storg()
         {
             InitializeComponent();
-            InitializeMasterPassword(); // Asks for master key when starting app
+
+            if (!AskMasterKey())
+            {
+                MessageBox.Show("Application will close because no valid master key was entered.");
+                Application.Exit();
+            }
         }
 
-
-        // Master key asking and verifying it
-        private void InitializeMasterPassword()
+        private bool AskMasterKey()
         {
             string masterKeyFile = Path.Combine(Application.StartupPath, "masterkey.txt");
 
             if (!File.Exists(masterKeyFile))
             {
-                // Create master key when first running
-                string masterPassword = Prompt.ShowDialog("Set a master password:", "Master Password");
-                if (string.IsNullOrEmpty(masterPassword))
+                // Asking user to set masterkey
+                for (int i = 0; i < 3; i++)
                 {
-                    MessageBox.Show("You need a master key!");
-                    Application.Exit();
-                    return;
+                    string masterPassword = Prompt.ShowDialog("Create master password:", "Master Password");
+                    if (!string.IsNullOrEmpty(masterPassword))
+                    {
+                        using (SHA256 sha = SHA256.Create())
+                        {
+                            aesKey = sha.ComputeHash(Encoding.UTF8.GetBytes(masterPassword));
+                            File.WriteAllText(masterKeyFile, Convert.ToBase64String(aesKey));
+                        }
+                        return true;
+                    }
+                    MessageBox.Show("Master password cannot be empty!");
                 }
-
-                using (SHA256 sha = SHA256.Create())
-                {
-                    byte[] hashBytes = sha.ComputeHash(Encoding.UTF8.GetBytes(masterPassword));
-                    File.WriteAllText(masterKeyFile, Convert.ToBase64String(hashBytes));
-                    aesKey = hashBytes;
-                }
+                return false; // 3 empty inputs
             }
             else
             {
-                // Asks for master key
-                string currentMasterPassword = Prompt.ShowDialog("Inset Master key:", "Master Password");
-                using (SHA256 sha = SHA256.Create())
+                // if masterkey set, try to verify it 
+                string storedHash = File.ReadAllText(masterKeyFile);
+                for (int attempts = 0; attempts < 3; attempts++)
                 {
-                    byte[] hashBytes = sha.ComputeHash(Encoding.UTF8.GetBytes(currentMasterPassword));
-                    string hash = Convert.ToBase64String(hashBytes);
-                    string storedHash = File.ReadAllText(masterKeyFile);
-                    // comparing hashes to verify key
-                    if (hash != storedHash)
+                    string currentMasterPassword = Prompt.ShowDialog("Enter Master key:", "Master Password");
+
+                    if (string.IsNullOrEmpty(currentMasterPassword))
                     {
-                        MessageBox.Show("Incorrect Master Key!");
-                        Application.Exit();
-                        return;
+                        MessageBox.Show("Master key cannot be empty!");
+                        continue;
                     }
-                    aesKey = hashBytes;
+
+                    using (SHA256 sha = SHA256.Create())
+                    {
+                        byte[] hashBytes = sha.ComputeHash(Encoding.UTF8.GetBytes(currentMasterPassword));
+                        string hash = Convert.ToBase64String(hashBytes);
+
+                        if (hash == storedHash)
+                        {
+                            aesKey = hashBytes;
+                            return true;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Incorrect master key!");
+                        }
+                    }
                 }
+                return false; // 3 wrong input
             }
         }
+
+
 
         private void LoadSvgToPictureBox(string svgPath, PictureBox pb)
         {
@@ -84,10 +103,11 @@ namespace Salasanakone
             public string Password { get; set; }
             public string Category { get; set; }
         }
-        // password storage
-        private List<PasswordInfo> passwords = new List<PasswordInfo>();
-        private string passwordFile = Path.Combine(Application.StartupPath, "passwords.json");
 
+        private List<PasswordInfo> passwords = new List<PasswordInfo>();
+        // passwordien json
+        private string passwordFile = Path.Combine(Application.StartupPath, "passwords.json");
+        
         private void LoadPasswords()
         {
             if (File.Exists(passwordFile))
@@ -95,24 +115,18 @@ namespace Salasanakone
                 string json = File.ReadAllText(passwordFile);
                 passwords = JsonSerializer.Deserialize<List<PasswordInfo>>(json);
 
-                // Decrypt passwords
                 foreach (var p in passwords)
-                {
                     if (!string.IsNullOrEmpty(p.Password))
                         p.Password = DecryptString(p.Password, aesKey);
-                }
             }
 
             listBox1.Items.Clear();
             foreach (var p in passwords)
-            {
                 listBox1.Items.Add($"{p.Site} - {p.Username}");
-            }
         }
-
+        // saving
         private void SavePasswords()
         {
-            // Encrypt passwords
             var encryptedPasswords = passwords.Select(p => new PasswordInfo
             {
                 Site = p.Site,
@@ -124,7 +138,7 @@ namespace Salasanakone
             string json = JsonSerializer.Serialize(encryptedPasswords, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(passwordFile, json);
         }
-        // encryption
+
         private string EncryptString(string plainText, byte[] key)
         {
             using (Aes aes = Aes.Create())
@@ -144,18 +158,23 @@ namespace Salasanakone
                 }
             }
         }
-        // more of encryption 
+
         private string DecryptString(string cipherText, byte[] key)
         {
-            byte[] fullCipher = Convert.FromBase64String(cipherText);
-            using (Aes aes = Aes.Create())
+            try
             {
-                aes.Key = key;
-                byte[] iv = new byte[16];
-                Array.Copy(fullCipher, 0, iv, 0, iv.Length);
-                aes.IV = iv;
-                using (MemoryStream ms = new MemoryStream())
+                if (string.IsNullOrEmpty(cipherText))
+                    return null;
+
+                byte[] fullCipher = Convert.FromBase64String(cipherText);
+                using (Aes aes = Aes.Create())
                 {
+                    aes.Key = key;
+                    byte[] iv = new byte[16];
+                    Array.Copy(fullCipher, 0, iv, 0, iv.Length);
+                    aes.IV = iv;
+
+                    using (MemoryStream ms = new MemoryStream())
                     using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
                     {
                         cs.Write(fullCipher, iv.Length, fullCipher.Length - iv.Length);
@@ -164,24 +183,28 @@ namespace Salasanakone
                     }
                 }
             }
+            catch
+            {
+                return null;
+            }
         }
-        // app starting process 
+
+        private bool passwordVisible = false;
+
         private void Storg_Load(object sender, EventArgs e)
         {
             LoadPasswords();
-            // showing first password in the list on right
+
             if (passwords.Count > 0)
             {
                 listBox1.SelectedIndex = 0;
                 var first = passwords[0];
                 label4.Text = first.Site;
                 label6.Text = first.Username;
-                label8.Text = new string('*', first.Password.Length);
+                label8.Text = string.IsNullOrEmpty(first.Password) ? "****" : new string('*', first.Password.Length);
                 label10.Text = first.Category;
                 passwordVisible = false;
             }
-
-            // if not any password on json showing labels empty
             else
             {
                 label4.Text = "-";
@@ -190,7 +213,8 @@ namespace Salasanakone
                 label10.Text = "-";
             }
         }
-        // empty events 
+
+        // empty events
         private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e) { }
         private void pictureBox5_Click(object sender, EventArgs e) { }
         private void pictureBox3_Click_1(object sender, EventArgs e) { }
@@ -205,17 +229,12 @@ namespace Salasanakone
         private void label8_Click(object sender, EventArgs e) { }
         private void label10_Click(object sender, EventArgs e) { }
 
-        // toggle password visibility onright 
-        private bool passwordVisible = false;
-
-
         private void button1_Click(object sender, EventArgs e)
         {
             int index = listBox1.SelectedIndex;
             if (index >= 0 && index < passwords.Count)
             {
                 var selected = passwords[index];
-                // toggle between visibilty
                 if (passwordVisible)
                 {
                     label8.Text = new string('*', selected.Password.Length);
@@ -228,9 +247,7 @@ namespace Salasanakone
                 }
             }
         }
-
-
-        // adding password 
+        // + button to add passowrds
         private void pictureBox1_Click(object sender, EventArgs e)
         {
             Form inputForm = new Form()
@@ -244,30 +261,16 @@ namespace Salasanakone
 
             Label lblSite = new Label() { Left = 10, Top = 20, Text = "Site/App:" };
             TextBox txtSite = new TextBox() { Left = 10, Top = 40, Width = 260 };
-
             Label lblUsername = new Label() { Left = 10, Top = 70, Text = "Username/Gmail:" };
             TextBox txtUsername = new TextBox() { Left = 10, Top = 90, Width = 260 };
-
             Label lblPassword = new Label() { Left = 10, Top = 120, Text = "Password:" };
             TextBox txtPassword = new TextBox() { Left = 10, Top = 140, Width = 260 };
-
             Label lblCategory = new Label() { Left = 10, Top = 170, Text = "Category:" };
             TextBox txtCategory = new TextBox() { Left = 10, Top = 190, Width = 260 };
-
             Button btnOK = new Button() { Text = "OK", Left = 50, Width = 80, Top = 220, DialogResult = DialogResult.OK };
             Button btnCancel = new Button() { Text = "Cancel", Left = 150, Width = 80, Top = 220, DialogResult = DialogResult.Cancel };
-            // form for adding passwords
-            inputForm.Controls.Add(lblSite);
-            inputForm.Controls.Add(txtSite);
-            inputForm.Controls.Add(lblUsername);
-            inputForm.Controls.Add(txtUsername);
-            inputForm.Controls.Add(lblPassword);
-            inputForm.Controls.Add(txtPassword);
-            inputForm.Controls.Add(lblCategory);
-            inputForm.Controls.Add(txtCategory);
-            inputForm.Controls.Add(btnOK);
-            inputForm.Controls.Add(btnCancel);
 
+            inputForm.Controls.AddRange(new Control[] { lblSite, txtSite, lblUsername, txtUsername, lblPassword, txtPassword, lblCategory, txtCategory, btnOK, btnCancel });
             inputForm.AcceptButton = btnOK;
             inputForm.CancelButton = btnCancel;
 
@@ -285,15 +288,12 @@ namespace Salasanakone
 
                     passwords.Add(newItem);
                     SavePasswords();
-
                     listBox1.Items.Add($"{newItem.Site} - {newItem.Username}");
-
                     MessageBox.Show("Password saved!");
                 }
             }
         }
 
-        // displaying infos on right of the selected password 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             int index = listBox1.SelectedIndex;
@@ -302,41 +302,36 @@ namespace Salasanakone
                 var selected = passwords[index];
                 label4.Text = selected.Site;
                 label6.Text = selected.Username;
-                label8.Text = new string('*', selected.Password.Length);
+                label8.Text = string.IsNullOrEmpty(selected.Password) ? "****" : new string('*', selected.Password.Length);
                 label10.Text = selected.Category;
                 passwordVisible = false;
             }
         }
-        // copying to clipboard 
+        // copying to clipboard
         private void button2_Click(object sender, EventArgs e)
         {
             int index = listBox1.SelectedIndex;
             if (index >= 0 && index < passwords.Count)
             {
                 string pw = passwords[index].Password;
-
                 if (!string.IsNullOrEmpty(pw))
                 {
                     Clipboard.SetText(pw);
                     MessageBox.Show("Password copied to clipboard!");
                 }
                 else
-                {
-                    MessageBox.Show("It doesnt have a password yet.");
-                }
+                    MessageBox.Show("It doesn't have a password yet.");
             }
             else
-            {
                 MessageBox.Show("Select a password first!.");
-            }
         }
-        // settings ( editing and delete ) 
+        // settings
         private void pictureBox7_Click(object sender, EventArgs e)
         {
             int index = listBox1.SelectedIndex;
             if (index < 0 || index >= passwords.Count)
             {
-                MessageBox.Show("Choose a password first!");
+                MessageBox.Show("Choose a password first.");
                 return;
             }
 
@@ -354,12 +349,11 @@ namespace Salasanakone
             Button btnEdit = new Button() { Text = "Edit", Left = 50, Width = 120, Top = 20, DialogResult = DialogResult.OK };
             Button btnDelete = new Button() { Text = "Delete", Left = 50, Width = 120, Top = 60 };
             Button btnCancel = new Button() { Text = "Cancel", Left = 50, Width = 120, Top = 100, DialogResult = DialogResult.Cancel };
-
             settingsForm.Controls.AddRange(new Control[] { btnEdit, btnDelete, btnCancel });
 
             btnDelete.Click += (s, ev) =>
             {
-                var result = MessageBox.Show("You sure you want to delete this password?", "Im Sure.", MessageBoxButtons.YesNo);
+                var result = MessageBox.Show("Are you sure u want to delete this password?", "Im Sure.", MessageBoxButtons.YesNo);
                 if (result == DialogResult.Yes)
                 {
                     passwords.RemoveAt(index);
@@ -382,26 +376,19 @@ namespace Salasanakone
 
                 Label lblSite = new Label() { Left = 10, Top = 20, Text = "Site/App:" };
                 TextBox txtSite = new TextBox() { Left = 10, Top = 40, Width = 260, Text = selected.Site };
-
                 Label lblUsername = new Label() { Left = 10, Top = 70, Text = "Username/Gmail:" };
                 TextBox txtUsername = new TextBox() { Left = 10, Top = 90, Width = 260, Text = selected.Username };
-
                 Label lblPassword = new Label() { Left = 10, Top = 120, Text = "Password:" };
                 TextBox txtPassword = new TextBox() { Left = 10, Top = 140, Width = 260, Text = selected.Password };
-
                 Label lblCategory = new Label() { Left = 10, Top = 170, Text = "Category:" };
                 TextBox txtCategory = new TextBox() { Left = 10, Top = 190, Width = 260, Text = selected.Category };
-
                 Button btnOK = new Button() { Text = "Save", Left = 50, Width = 80, Top = 220, DialogResult = DialogResult.OK };
                 Button btnCancelEdit = new Button() { Text = "Cancel", Left = 150, Width = 80, Top = 220, DialogResult = DialogResult.Cancel };
 
-                editForm.Controls.AddRange(new Control[] { lblSite, txtSite, txtUsername, txtPassword, lblPassword, lblCategory, txtCategory, btnOK, btnCancelEdit });
-
+                editForm.Controls.AddRange(new Control[] { lblSite, txtSite, lblUsername, txtUsername, lblPassword, txtPassword, lblCategory, txtCategory, btnOK, btnCancelEdit });
                 editForm.AcceptButton = btnOK;
                 editForm.CancelButton = btnCancelEdit;
 
-
-                // saving updated infos 
                 if (editForm.ShowDialog() == DialogResult.OK)
                 {
                     selected.Site = txtSite.Text;
@@ -418,13 +405,9 @@ namespace Salasanakone
             settingsForm.ShowDialog();
         }
 
-        private void label8_Click_1(object sender, EventArgs e)
-        {
-
-        }
+        private void label8_Click_1(object sender, EventArgs e) { }
     }
 
-    // input prompti
     public static class Prompt
     {
         public static string ShowDialog(string text, string caption)
