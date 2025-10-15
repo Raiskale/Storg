@@ -44,12 +44,8 @@ public static string EncryptString(string plainText, byte[] key)
     }
 }
 ```
-## Master key kysely
-Kun sovellus käynnistyy, kysytään master keytä.
-```
-string masterPassword = Prompt.ShowDialog("Enter master password:", "Security");
-byte[] key = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(masterPassword));
-```
+## Sovelluksen toiminta
+
 
 # 💡 Jatkokehitysideat
 1. Pilvitallennus ja synkronointi eri laitteiden välillä
