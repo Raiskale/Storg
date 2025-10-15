@@ -45,7 +45,7 @@ public static string EncryptString(string plainText, byte[] key)
 }
 ```
 ## Sovelluksen toiminta
-
+![Vuokaavio](https://github.com/Raiskale/Storg/blob/master/vuokaavio.png?raw=true) 
 
 # 💡 Jatkokehitysideat
 1. Pilvitallennus ja synkronointi eri laitteiden välillä
